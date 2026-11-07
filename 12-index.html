@@ -1,0 +1,120 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#e2546e">
+<title>Saheli - private period &amp; PCOS companion</title>
+<link rel="manifest" href="manifest.webmanifest">
+<script src="coi-serviceworker.min.js"></script>
+<link rel="stylesheet" href="styles.css"></head><body>
+<header><h1>Saheli</h1><span id="tagline">private period + PCOS companion</span><button id="langbtn" style="margin-left:auto;background:#fff;border:1.5px solid #e6d7de;border-radius:16px;padding:4px 12px;font-size:13px;font-weight:600;cursor:pointer">हिंदी</button></header>
+<div class="ringwrap"><div class="ringcenter">
+<svg id="ring" width="250" height="250" viewBox="0 0 250 250"></svg>
+<div class="day" id="cday">Namaste</div>
+<div class="ph" id="cphase">log your first period</div>
+<div class="nx" id="cnext"></div>
+<div id="cconf"></div>
+</div></div>
+<div class="legend" id="legend"></div>
+<button class="btn-log" id="btnlog" data-i18n="logToday">Log today</button>
+<button class="btn-log" id="btnvoice" style="background:var(--lav);margin-top:-4px">&#127908; Speak your log (Hindi/Marathi/English)</button>
+<button class="btn-log" id="btnsign" style="background:var(--mint,#5cc4a0);margin-top:-4px" onclick="document.getElementById('dlg-sign').showModal()">&#128247; Photo sign check (beta)</button>
+<div class="cards" id="cards"></div>
+<div class="hist" id="hist"></div>
+<p class="privacy" data-i18n="footer">Private by design - everything stays on this phone. Estimates and screening, never a diagnosis.</p>
+<footer>
+<button class="on" data-i18n="navToday">Today</button><button id="fpcos" data-i18n="navCheck">PCOS check</button><button id="fdemo" data-i18n="navDemo">Demo data</button><button id="flearn" data-i18n="navLearn">Learn</button><button id="fchat" data-i18n="navChat">Chat</button><button id="freset" data-i18n="navReset">Reset</button>
+</footer>
+<dialog id="dlg7"><div class="sheet">
+<h2 id="learntitle">Learn</h2>
+<div id="learnbox" style="max-height:60vh;overflow:auto"></div>
+<div class="row" style="margin-top:10px"><button class="grow ghost" onclick="document.getElementById('dlg7').close()">Close</button></div>
+</div></dialog>
+<dialog id="dlg6"><div class="sheet" id="obbox"></div></dialog>
+<dialog id="dlg5"><div class="sheet">
+<h2>Doctor visit prep</h2>
+<p style="font-size:12px;color:var(--mut);margin-bottom:8px">Show this at your appointment. It summarises your tracked cycles, screening result and suggested tests to ask about. Not a diagnosis.</p>
+<div id="dreport" style="font-size:13px;line-height:1.5;max-height:50vh;overflow:auto"></div>
+<div class="row" style="margin-top:10px"><button class="grow ghost" id="dclose">Close</button><button class="grow save" id="dprint">Print / save as PDF</button></div>
+</div></dialog>
+<dialog id="dlg"><div class="sheet">
+<h2 id="dlgtitle">Log today</h2><div id="qsuggest" style="margin-bottom:6px"></div>
+<div class="q"><label>Period flow</label><div class="seg" id="qflow">
+<button data-v="none">None</button><button data-v="light">Light</button><button data-v="medium">Medium</button><button data-v="heavy">Heavy</button></div></div>
+<div class="q"><label>Cramps: <b id="crampsv">0</b>/10</label><input type="range" id="qcramps" min="0" max="10" value="0"></div>
+<div class="q"><label>Bloating</label><div class="seg" id="qbloat">
+<button data-v="none">None</button><button data-v="mild">Mild</button><button data-v="strong">Strong</button></div></div>
+<div class="q"><label>Mood</label><div class="moods" id="qmood">
+<button data-v="1">Rough</button><button data-v="2">Low</button><button data-v="3">Okay</button><button data-v="4">Good</button><button data-v="5">Great</button></div>
+<div class="tags" id="qtags">
+<button data-v="happy">happy</button><button data-v="calm">calm</button><button data-v="irritated">irritated</button><button data-v="angry">angry</button><button data-v="anxious">anxious</button><button data-v="weepy">weepy</button></div></div>
+<div class="q"><label>Skin</label><div class="seg" id="qskin">
+<button data-v="clear">Clear</button><button data-v="some">Some</button><button data-v="breakout">Breakout</button></div></div>
+<details class="more"><summary>More (optional): symptoms, water, sleep, exercise, sex</summary>
+<div class="q"><label>More symptoms</label><div class="tags" id="qmore">
+<button data-v="headache">headache</button><button data-v="nausea">nausea</button><button data-v="back pain">back pain</button><button data-v="tired">low energy</button><button data-v="cravings">cravings</button><button data-v="dizzy">dizzy</button><button data-v="discharge">unusual discharge</button><button data-v="hairfall">hair fall</button></div></div>
+<div class="q"><label>Water (glasses): <b id="waterv">0</b></label><div class="row" style="gap:8px"><button class="ghost grow" id="waterm">-</button><button class="ghost grow" id="waterp">+</button></div></div>
+<div class="q"><label>Sleep (hours)</label><input type="number" id="qsleep" min="0" max="16" step="0.5" style="width:100%;padding:8px;border:1.5px solid #e6dbe4;border-radius:10px"></div>
+<div class="q"><label>Exercise</label><div class="seg" id="qex"><button data-v="none">None</button><button data-v="light">Light</button><button data-v="moderate">Moderate</button><button data-v="hard">Hard</button></div></div>
+<div class="q"><label>Sex (private)</label><div class="seg" id="qsex"><button data-v="none">None</button><button data-v="protected">Protected</button><button data-v="unprotected">Unprotected</button></div></div>
+<div class="q"><label>Weight (kg, optional)</label><input type="number" id="qweight" min="25" max="250" step="0.1" style="width:100%;padding:8px;border:1.5px solid #e6dbe4;border-radius:10px"></div>
+</details>
+<div class="q"><label>Note (optional)</label><textarea id="qnote" rows="2" placeholder="anything else..."></textarea></div>
+<div class="row"><button class="grow ghost" id="bcancel">Cancel</button><button class="grow save" id="bsave">Save</button></div>
+</div></dialog>
+<dialog id="dlg4"><div class="sheet" style="text-align:center">
+<h2>Speak your log</h2>
+<div id="vlang" style="margin:2px 0 10px">
+<button class="langpill on" data-l="hi">&#2361;&#2367;&#2306;&#2342;&#2368;</button><button class="langpill" data-l="mr">&#2350;&#2352;&#2366;&#2336;&#2368;</button><button class="langpill" data-l="en">English</button>
+</div>
+<button id="vmic" aria-label="start voice log"><svg width="34" height="34" viewBox="0 0 24 24" fill="#fff"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11z"/></svg></button>
+<p id="vstatus" style="font-size:13px;color:var(--mut);margin:10px 0 4px">Tap the mic and speak, e.g. "aaj pet dard hai, sujan bhi, mood kharab". Tap again to stop.</p>
+<div id="vheard" style="font-size:14px;margin:8px 0;min-height:20px"></div>
+<div id="vchips" style="text-align:left"></div>
+<div class="row" style="margin-top:10px"><button class="grow ghost" id="vclose">Close</button><button class="grow save" id="vapply" hidden>Add to my log</button></div>
+</div></dialog>
+<dialog id="dlg2"><div class="sheet">
+<h2>PCOS early-warning check</h2>
+<p style="font-size:12px;color:var(--mut);margin-bottom:14px">10 quick answers. Screening only - a doctor confirms with blood tests + ultrasound. Nothing leaves this phone.</p>
+<div id="qs"></div>
+<div class="row"><button class="grow ghost" id="bcancel2">Cancel</button><button class="grow save" id="bscore">See my result</button></div>
+</div></dialog>
+<dialog id="dlg3"><div class="sheet" id="resultbox"></div></dialog>
+
+<dialog id="dlg-chat"><div class="sheet">
+<h2 data-i18n="chatTitle">Ask Saheli</h2>
+<p style="font-size:12px;color:var(--mut)">Answers come only from the vetted Saheli knowledge base (NHS, ACOG, WHO, 2023 PCOS guideline). Runs fully on this phone - nothing you type leaves the device. No diagnosis, no medicine doses.</p>
+<div id="chat-thread" style="max-height:38vh;overflow:auto;margin:8px 0"></div>
+<div class="chips" id="chat-starters">
+<button class="chip" data-q="What helps period cramps?">What helps cramps?</button>
+<button class="chip" data-q="Is spearmint tea good for PCOS?">Spearmint tea for PCOS?</button>
+<button class="chip" data-q="Contraception basics">Contraception basics</button>
+<button class="chip" data-q="How do I prevent anemia?">Prevent anemia</button>
+</div>
+<div class="row" style="margin-top:8px">
+<input id="chat-in" data-i18n-ph="chatPlaceholder" class="grow" style="padding:10px;border:1.5px solid #e6d7de;border-radius:12px;font-size:14px" placeholder="Type a question...">
+<button class="save" id="chat-send" data-i18n="send" style="padding:10px 16px">Send</button>
+</div>
+<div class="row" style="margin-top:10px"><button class="grow ghost" onclick="document.getElementById('dlg-chat').close()">Close</button></div>
+</div></dialog>
+
+<dialog id="dlg-sign"><div class="sheet">
+<h2>Photo sign check (beta)</h2>
+<p style="font-size:12px;color:var(--mut)">Take or choose a well-lit close-up of skin (for acne) or your parting (for hair thinning). The photo never leaves this phone - it is analysed here and not stored. This is a rough observation from one photo, never a medical read; lighting changes everything.</p>
+<input type="file" id="signfile" accept="image/*" capture="user" style="margin:8px 0">
+<img id="signprev" style="max-width:100%;border-radius:12px;display:none">
+<div id="signres" style="margin:8px 0;font-size:14px"></div>
+<div class="row" style="margin-top:10px">
+<button class="grow ghost" onclick="document.getElementById('dlg-sign').close()">Close</button>
+<button class="grow save" id="signsave" style="display:none">Save as today's skin note</button>
+</div>
+</div></dialog>
+
+<dialog id="dlg-detail"><div class="sheet">
+<h2 id="detailtitle">Details</h2>
+<div id="detailbox" style="max-height:55vh;overflow:auto"></div>
+<div class="row" style="margin-top:10px"><button class="grow ghost" onclick="document.getElementById('dlg-detail').close()">Close</button></div>
+</div></dialog>
+
+<script src="sherpa-onnx-wasm-main-vad-asr.js"></script><script src="sherpa-onnx-asr.js"></script><script src="extractor.js"></script><script src="voice.js"></script><script src="cycle.js"></script><script src="screener-weights.js"></script><script src="screener.js"></script><script src="flags.js"></script>
+<script src="chat.js"></script><script src="signlab.js"></script><script src="prompts.js"></script><script src="trends.js"></script><script src="i18n.js"></script><script src="tips.js"></script><script src="predict.js"></script><script src="onboarding.js"></script><script src="app.js"></script>
+
+</body></html>
