@@ -11,6 +11,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
         http.server.SimpleHTTPRequestHandler.end_headers(self)
 
+socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
     print("Saheli at http://localhost:%d" % PORT)
     httpd.serve_forever()

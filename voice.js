@@ -15,13 +15,12 @@ var SaheliVoice = (function () {
     });
     return modPromise;
   }
-  const REMOTE_BASE = (typeof location!=='undefined' && location.search.indexOf('tinyvoice')>=0)
-    ? 'https://huggingface.co/ippocode/indic-asr-onnx/resolve/main/models/whisper-tiny/'
-    : 'https://huggingface.co/ippocode/indic-asr-onnx/resolve/main/models/whisper-small-hi/';
-  async function fileToFS(M, url, name) {
+  // whisper-tiny int8 (103MB): the only size verified working with this wasm build (small int8 mis-decodes).
+  const REMOTE_BASE = 'https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/';
+  async function fileToFS(M, url, remoteName, name) {
     // local model dir first (dev/offline bundle); fall back to Hugging Face CDN (CORS-enabled, free)
     let resp = await fetch(url).catch(function(){return null;});
-    if (!resp || !resp.ok) resp = await fetch(REMOTE_BASE + name);
+    if (!resp || !resp.ok) resp = await fetch(REMOTE_BASE + remoteName);
     const buf = new Uint8Array(await resp.arrayBuffer());
     M.FS_createDataFile('/', name, buf, true, false, true);
   }
@@ -31,18 +30,19 @@ var SaheliVoice = (function () {
     if (recognizer) { try { recognizer.free(); } catch (e) {} recognizer = null; }
     onProgress('Loading voice engine (first time ~15MB)...');
     const M = await loadModule();
-    const files = [['encoder.int8.onnx', 'encoder'], ['decoder.int8.onnx', 'decoder'], ['tokens.txt', 'tokens']];
+    const P = 'tiny-';
+    const files = [[P + 'encoder.int8.onnx', 'encoder.int8.onnx'], [P + 'decoder.int8.onnx', 'decoder.int8.onnx'], [P + 'tokens.txt', 'tokens.txt']];
     let done = 0;
-    for (const [f] of files) {
-      onProgress('Downloading on-device voice model (' + ++done + '/3, ~380MB first time only - stays on your phone)...');
-      await fileToFS(M, MODEL_DIR + f, f);
+    for (const [remote, local] of files) {
+      onProgress('Downloading on-device voice model (' + ++done + '/3, ~103MB first time only - stays on your phone)...');
+      await fileToFS(M, MODEL_DIR + local, remote, local);
     }
     onProgress('Preparing recognizer...');
     recognizer = new OfflineRecognizer({
       featConfig: { sampleRate: 16000, featureDim: 80 },
       modelConfig: {
         whisper: { encoder: 'encoder.int8.onnx', decoder: 'decoder.int8.onnx', language: lang, task: 'transcribe', tailPaddings: 1000 },
-        tokens: 'tokens.txt', numThreads: 2, provider: 'cpu', debug: 0, modelType: 'whisper'
+        tokens: 'tokens.txt', numThreads: 2, provider: "cpu", debug: 0, modelType: 'whisper'
       }
     }, M);
     recLang = lang;
@@ -56,7 +56,9 @@ var SaheliVoice = (function () {
   }
   async function start() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let ctx;
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 }); }
+    catch (e) { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
     const src = ctx.createMediaStreamSource(stream);
     const proc = ctx.createScriptProcessor(4096, 1, 1);
     const chunks = [];
@@ -72,7 +74,8 @@ var SaheliVoice = (function () {
     const all = new Float32Array(total); let o = 0;
     for (const c of st.chunks) { all.set(c, o); o += c.length; }
     let pcm = resample(all, st.rate, 16000);
-    const padded = new Float32Array(pcm.length + 16000); padded.set(pcm); // 1s trailing silence
+    const WINDOW = 480000; // whisper needs exactly 30s of 16kHz audio
+    const padded = new Float32Array(WINDOW); padded.set(pcm.subarray(0, WINDOW));
     onProgress('Recognizing on this phone...');
     const rec = await ensureRecognizer(onProgress, SaheliVoice.lang || 'hi');
     const s = rec.createStream();
